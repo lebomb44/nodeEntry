@@ -7,7 +7,9 @@ const char cmdGetName[] PROGMEM = "get";
 const char cmdSetName[] PROGMEM = "set";
 
 const char pingName[] PROGMEM = "ping";
-const char windowShutterButtonName[] PROGMEM = "windowShutterButton";
+const char nfcInitName[] PROGMEM = "nfcInit";
+const char nfcReadBlockName[] PROGMEM = "nfcReadBlock";
+const char nfcReadTargetName[] PROGMEM = "nfcReadTarget";
 
 uint32_t previousTime_1s = 0;
 uint32_t previousTime_10s = 0;
@@ -24,7 +26,9 @@ void setup() {
   cnc_cmdSetName_set(cmdSetName);
   cnc_sepName_set(sepName);
   cnc_cmdGet_Add(pingName, ping_cmdGet);
-  cnc_cmdGet_Add(windowWindowContactName , windowWindowContact_cmdGet);
+  cnc_cmdSet_Add(nfcInitName, nfcInit);
+  cnc_cmdGet_Add(nfcReadBlockName, nfcReadBlock);
+  cnc_cmdGet_Add(nfcReadTargetName, nfcReadTarget);
   
   previousTime_1s = millis();
   previousTime_10s = previousTime_1s;

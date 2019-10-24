@@ -8,6 +8,9 @@ const char cmdSetName[] PROGMEM = "set";
 
 const char pingName[] PROGMEM = "ping";
 const char nfcInitName[] PROGMEM = "nfcInit";
+const char nfcFirmwareVersionName[] PROGMEM = "nfcFirmwareVersion";
+const char nfcReadPassiveTargetIDName[] PROGMEM = "nfcReadPassiveTargetID";
+const char nfcAuthenticateBlockName[] PROGMEM = "nfcAuthenticateBlock";
 const char nfcReadBlockName[] PROGMEM = "nfcReadBlock";
 const char nfcReadTargetName[] PROGMEM = "nfcReadTarget";
 

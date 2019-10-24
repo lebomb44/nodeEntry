@@ -49,7 +49,7 @@ void nfcKey_cmdSet(int arg_cnt, char **args) {
       strkey_[0] = args[3][2*i];
       strkey_[1] = args[3][(2*i)+1];
       strkey_[2] = 0;
-      nfcKey[i] = strtoul(strkey_, NULL, 16));
+      nfcKey[i] = strtoul(strkey_, NULL, 16);
     }
   }
 }
@@ -80,12 +80,10 @@ void loop() {
   currentTime = millis(); cncPoll();
   /* HK @ 1.0Hz */
   if((uint32_t)(currentTime - previousTime_1s) >= 1000) {
-    windowWindowContact.run(true); cncPoll();
     previousTime_1s = currentTime;
   }
   /* HK @ 0.1Hz */
   if((uint32_t)(currentTime - previousTime_10s) >= 10000) {
-    tempSensors.begin(); cncPoll();
     previousTime_10s = currentTime;
   }
 }

@@ -48,6 +48,7 @@ void nfcKey_cmdSet(int arg_cnt, char **args) {
     for(uint8_t i=0; i<6; i++) {
       strkey_[0] = args[3][2*i];
       strkey_[1] = args[3][(2*i)+1];
+      strkey_[2] = 0;
       nfcKey[i] = strtoul(strkey_, NULL, 16));
     }
   }

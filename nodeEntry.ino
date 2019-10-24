@@ -31,16 +31,23 @@ void nfcTargetID_cmdGet(int arg_cnt, char **args) {
   for(uint8_t i=0; i<7; i++) { nfcUID[i] = 0; }
   uint64_t uid_ = 0;
   if(nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, nfcUID, &nfcUIDLength) {
-    for(uint8_t i=0; i<7; i++) { uid_ << 8; uid_ |= nfcUID[i]; }
+    for(uint8_t i=0; i<7; i++) { uid_ = uid_ << 8; uid_ |= nfcUID[i]; }
   }
   cnc_print_cmdGet_u64(nfcTargetIDName, 0x00FFFFFFFFFFFFFF & uid_);
 }
 void nfcKey_cmdGet(int arg_cnt, char **args) {
   uint64_t key_ = 0;
-  for(uint8_t i=0; i<6; i++) { key_ << 8; key_ |= nfcKey[i]; }
+  for(uint8_t i=0; i<6; i++) { key_ = key_ << 8; key_ |= nfcKey[i]; }
   cnc_print_cmdGet_u64(nfcKeyName, 0x0000FFFFFFFFFFFF & key_);
 }
-
+void nfcKey_cmdSet(int arg_cnt, char **args) {
+  uint64_t key_ = 0;
+  if(4 == arg_cnt) {
+    key_ = strtoul(args[3], NULL, 10));
+    for(uint8_t i=0; i<6; i++) { nfcKey[5-i] = key_; key_ = key_ >> 8; }
+  }
+}
+     
 void setup() {
   Serial.begin(115200);
   cncInit(nodeName);
@@ -52,6 +59,7 @@ void setup() {
   cnc_cmdGet_Add(nfcFirmwareVersionName, nfcFirmwareVersion_cmdGet);
   cnc_cmdGet_Add(nfcTargetIDName, nfcTargetID_cmdGet);
   cnc_cmdGet_Add(nfcKeyName, nfcKey_cmdGet);
+  cnc_cmdSet_Add(nfcKeyName, nfcKey_cmdSet);
   cnc_cmdGet_Add(nfcReadBlockName, nfcReadBlock);
   cnc_cmdGet_Add(nfcReadTargetName, nfcReadTarget);
   

@@ -7,7 +7,6 @@ const char cmdGetName[] PROGMEM = "get";
 const char cmdSetName[] PROGMEM = "set";
 
 const char pingName[] PROGMEM = "ping";
-const char nfcInitName[] PROGMEM = "nfcInit";
 const char nfcFirmwareVersionName[] PROGMEM = "nfcFirmwareVersion";
 const char nfcReadPassiveTargetIDName[] PROGMEM = "nfcReadPassiveTargetID";
 const char nfcAuthenticateBlockName[] PROGMEM = "nfcAuthenticateBlock";
@@ -18,8 +17,11 @@ uint32_t previousTime_1s = 0;
 uint32_t previousTime_10s = 0;
 uint32_t currentTime = 0;
 
+PN532_SPI pn532spi(SPI, 10);
+PN532 nfc(pn532spi);
+
 void ping_cmdGet(int arg_cnt, char **args) { cnc_print_cmdGet_u32(pingName, currentTime); }
-void windowWindowContact_cmdGet(int arg_cnt, char **args) { windowWindowContact.cmdGet(arg_cnt, args); }
+void nfcFirmwareVersion_cmdGet(int arg_cnt, char **args) { cnc_print_hk_u32(nfcFirmwareVersionName, nfc.getFirmwareVersion()); }
 
 void setup() {
   Serial.begin(115200);
@@ -35,6 +37,9 @@ void setup() {
   
   previousTime_1s = millis();
   previousTime_10s = previousTime_1s;
+  
+  nfc.begin();
+  nfc.SAMConfig();
 }
 
 void loop() {

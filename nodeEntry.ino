@@ -31,7 +31,7 @@ void setup() {
   cnc_cmdSetName_set(cmdSetName);
   cnc_sepName_set(sepName);
   cnc_cmdGet_Add(pingName, ping_cmdGet);
-  cnc_cmdSet_Add(nfcInitName, nfcInit);
+  cnc_cmdSet_Add(nfcFirmwareVersionName, nfcFirmwareVersion_cmdGet);
   cnc_cmdGet_Add(nfcReadBlockName, nfcReadBlock);
   cnc_cmdGet_Add(nfcReadTargetName, nfcReadTarget);
   

@@ -1,4 +1,7 @@
 #include <CnC.h>
+#include <SPI.h>
+#include <PN532_SPI.h>
+#include "PN532.h"
 
 const char nodeName[] PROGMEM = "entry";
 const char sepName[] PROGMEM = " ";
@@ -36,15 +39,18 @@ void nfcTargetID_cmdGet(int arg_cnt, char **args) {
   cnc_print_cmdGet_u64(nfcTargetIDName, 0x00FFFFFFFFFFFFFF & uid_);
 }
 void nfcKey_cmdGet(int arg_cnt, char **args) {
-  uint64_t key_ = 0;
-  for(uint8_t i=0; i<6; i++) { key_ = key_ << 8; key_ |= nfcKey[i]; }
-  cnc_print_cmdGet_u64(nfcKeyName, 0x0000FFFFFFFFFFFF & key_);
+  cnc_print_cmdGet_tbd(nfcKeyName);
+  for(uint8_t i=0; i<6; i++) { Serial.print(nfcKey[i], HEX); }
+  Serial.println(); Serial.flush();
 }
 void nfcKey_cmdSet(int arg_cnt, char **args) {
-  uint64_t key_ = 0;
+  char strkey_[3] = {0,0,0};
   if(4 == arg_cnt) {
-    key_ = strtoul(args[3], NULL, 10));
-    for(uint8_t i=0; i<6; i++) { nfcKey[5-i] = key_; key_ = key_ >> 8; }
+    for(uint8_t i=0; i<6; i++) {
+      strkey_[0] = args[3][2*i];
+      strkey_[1] = args[3][(2*i)+1];
+      nfcKey[i] = strtoul(strkey_, NULL, 16));
+    }
   }
 }
      
@@ -60,8 +66,8 @@ void setup() {
   cnc_cmdGet_Add(nfcTargetIDName, nfcTargetID_cmdGet);
   cnc_cmdGet_Add(nfcKeyName, nfcKey_cmdGet);
   cnc_cmdSet_Add(nfcKeyName, nfcKey_cmdSet);
-  cnc_cmdGet_Add(nfcReadBlockName, nfcReadBlock);
-  cnc_cmdGet_Add(nfcReadTargetName, nfcReadTarget);
+  //cnc_cmdGet_Add(nfcReadBlockName, nfcReadBlock);
+  //cnc_cmdGet_Add(nfcReadTargetName, nfcReadTarget);
   
   previousTime_1s = millis();
   previousTime_10s = previousTime_1s;

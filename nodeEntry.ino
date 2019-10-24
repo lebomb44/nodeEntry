@@ -8,7 +8,7 @@ const char cmdSetName[] PROGMEM = "set";
 
 const char pingName[] PROGMEM = "ping";
 const char nfcFirmwareVersionName[] PROGMEM = "nfcFirmwareVersion";
-const char nfcReadPassiveTargetIDName[] PROGMEM = "nfcReadPassiveTargetID";
+const char nfcTargetIDName[] PROGMEM = "nfcTargetID";
 const char nfcAuthenticateBlockName[] PROGMEM = "nfcAuthenticateBlock";
 const char nfcReadBlockName[] PROGMEM = "nfcReadBlock";
 const char nfcReadTargetName[] PROGMEM = "nfcReadTarget";
@@ -20,8 +20,18 @@ uint32_t currentTime = 0;
 PN532_SPI pn532spi(SPI, 10);
 PN532 nfc(pn532spi);
 
+uint8_t nfcSuccessCmd = 0;
+uint8_t nfcUID[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
+uint8_t nfcUIDLength = 0;  
+
 void ping_cmdGet(int arg_cnt, char **args) { cnc_print_cmdGet_u32(pingName, currentTime); }
-void nfcFirmwareVersion_cmdGet(int arg_cnt, char **args) { cnc_print_hk_u32(nfcFirmwareVersionName, nfc.getFirmwareVersion()); }
+void nfcFirmwareVersion_cmdGet(int arg_cnt, char **args) { cnc_print_cmdGet_u32(nfcFirmwareVersionName, nfc.getFirmwareVersion()); }
+void nfcTargetID_cmdGet(int arg_cnt, char **args) {
+  nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, nfcUID, &nfcUIDLength);
+  uint32_t uid_ = 0;
+  for(uint8_t i=0; i<7; i++) { uid_ << 8; uid_ |= nfcUID[i]; }
+  cnc_print_cmdGet_u32(nfcTargetIDName, nfcUID);
+}
 
 void setup() {
   Serial.begin(115200);
@@ -31,7 +41,8 @@ void setup() {
   cnc_cmdSetName_set(cmdSetName);
   cnc_sepName_set(sepName);
   cnc_cmdGet_Add(pingName, ping_cmdGet);
-  cnc_cmdSet_Add(nfcFirmwareVersionName, nfcFirmwareVersion_cmdGet);
+  cnc_cmdGet_Add(nfcFirmwareVersionName, nfcFirmwareVersion_cmdGet);
+  cnc_cmdGet_Add(nfcTargetIDName, nfcTargetID_cmdGet);
   cnc_cmdGet_Add(nfcReadBlockName, nfcReadBlock);
   cnc_cmdGet_Add(nfcReadTargetName, nfcReadTarget);
   

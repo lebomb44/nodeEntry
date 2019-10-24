@@ -27,9 +27,11 @@ uint8_t nfcUIDLength = 0;
 void ping_cmdGet(int arg_cnt, char **args) { cnc_print_cmdGet_u32(pingName, currentTime); }
 void nfcFirmwareVersion_cmdGet(int arg_cnt, char **args) { cnc_print_cmdGet_u32(nfcFirmwareVersionName, nfc.getFirmwareVersion()); }
 void nfcTargetID_cmdGet(int arg_cnt, char **args) {
-  nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, nfcUID, &nfcUIDLength);
+  for(uint8_t i=0; i<7; i++) { nfcUID[i] = 0; }
   uint32_t uid_ = 0;
-  for(uint8_t i=0; i<7; i++) { uid_ << 8; uid_ |= nfcUID[i]; }
+  if(nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, nfcUID, &nfcUIDLength) {
+    for(uint8_t i=0; i<7; i++) { uid_ << 8; uid_ |= nfcUID[i]; }
+  }
   cnc_print_cmdGet_u32(nfcTargetIDName, nfcUID);
 }
 

@@ -98,28 +98,50 @@ void nfcFormat_cmdGet(int arg_cnt, char **args) {
   if(5 == arg_cnt) {
     uint8_t surname_[16] = {0};
     uint8_t name_[16] = {0};
+    uint8_t data_[16] = {0};
     char strdata_[3] = {0,0,0};
+
+    /* Surname */
+    for(uint8_t i=0; i<16; i++) { surname_[i] = 0 }
     for(uint8_t i=0; i<16; i++) {
+      if(0 == args[3][2*i]) { break; }
       strdata_[0] = args[3][2*i];
       strdata_[1] = args[3][(2*i)+1];
       strdata_[2] = 0;
       surname_[i] = strtoul(strdata_, NULL, 16);
     }
+    /* Name */
+    for(uint8_t i=0; i<16; i++) { name_[i] = 0 }
     for(uint8_t i=0; i<16; i++) {
+      if(0 == args[4][2*i]) { break; }
       strdata_[0] = args[4][2*i];
       strdata_[1] = args[4][(2*i)+1];
       strdata_[2] = 0;
       name_[i] = strtoul(strdata_, NULL, 16);
     }
+    /* Data */
+    for(uint8_t i=0; i<16; i++) { data_[i] = 0 }
+    /* Keys */
+    for(uint8_t i=0; i<6; i++) { keys_[i] = nfcKey[i]; keys_[i+10] = nfcKey[i]+1; }
+    key[6] = 0; key[7] = 0; key[8] = 0; key[9] = 0;
+    /* Write all blocks to tag */
     for(uint8_t i=0; i<16; i++) {
       if(0 == nfc.mifareclassic_AuthenticateBlock(nfcUID, nfcUIDLength, i, 0, nfcKey)) {
         cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("AUT_ERROR "); Serial.println(i/4); Serial.flush(); return;
       }
-      if(0 == nfc.mifareclassic_WriteDataBlock(i, surname_)) {
-        cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("SURNAME_ERRORR "); Serial.println(i); Serial.flush(); return;
+      if(0 != i) {
+        if(0 == nfc.mifareclassic_WriteDataBlock(i, surname_)) {
+          cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("SURNAME_ERROR "); Serial.println(i); Serial.flush(); return;
+        }
       }
-      if(0 == nfc.mifareclassic_WriteDataBlock(i, name_)) {
-        cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("NAME_ERRORR "); Serial.println(i); Serial.flush(); return;
+      if(0 == nfc.mifareclassic_WriteDataBlock(i+1, name_)) {
+        cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("NAME_ERROR "); Serial.println(i); Serial.flush(); return;
+      }
+      if(0 == nfc.mifareclassic_WriteDataBlock(i+2, data_)) {
+        cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("DATA_ERROR "); Serial.println(i); Serial.flush(); return;
+      }
+      if(0 == nfc.mifareclassic_WriteDataBlock(i+3, keys_)) {
+        cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("KEYS_ERROR "); Serial.println(i); Serial.flush(); return;
       }
     }
     cnc_print_cmdGet_tbd(nfcFormatName); Serial.println("OK"); Serial.flush(); return;

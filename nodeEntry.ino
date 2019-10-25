@@ -53,7 +53,15 @@ void nfcKey_cmdSet(int arg_cnt, char **args) {
     }
   }
 }
-     
+void nfcnfcAuthenticateBlock_cmdGet(int arg_cnt, char **args) {
+  if(5 == arg_cnt) {
+    uint32_t blockNumber_ = strtoul(args[3], NULL, 10);
+    uint8_t keyNumber_ = strtoul(args[4], NULL, 10);
+    cnc_print_cmdGet_u32(nfcAuthenticateBlockName, nfc.mifareclassic_AuthenticateBlock (nfcUID, nfcUIDLength, blockNumber_, keyNumber_, nfcKey));
+  }
+  else { cnc_print_cmdGet_tbd(nfcAuthenticateBlockName); Serial.println("ERROR"); Serial.flush(); }
+}
+
 void setup() {
   Serial.begin(115200);
   cncInit(nodeName);
@@ -66,6 +74,7 @@ void setup() {
   cnc_cmdGet_Add(nfcTargetIDName, nfcTargetID_cmdGet);
   cnc_cmdGet_Add(nfcKeyName, nfcKey_cmdGet);
   cnc_cmdSet_Add(nfcKeyName, nfcKey_cmdSet);
+  cnc_cmdGet_Add(nfcAuthenticateBlockName, nfcnfcAuthenticateBlock_cmdGet)
   //cnc_cmdGet_Add(nfcReadBlockName, nfcReadBlock);
   //cnc_cmdGet_Add(nfcReadTargetName, nfcReadTarget);
   

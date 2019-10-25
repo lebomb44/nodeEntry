@@ -38,12 +38,12 @@ void nfcTargetID_cmdGet(int arg_cnt, char **args) {
   for(uint8_t i=0; i<7; i++) { nfcUID[i] = 0; }
   nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, nfcUID, &nfcUIDLength);
   cnc_print_cmdGet_tbd(nfcTargetIDName);
-  for(uint8_t i=0; i<7; i++) { Serial.print(nfcUID[i], HEX); }
+  for(uint8_t i=0; i<7; i++) { Serial.print(nfcUID[i]/16, HEX); Serial.print(nfcUID[i]%16, HEX); }
   Serial.println(); Serial.flush();
 }
 void nfcKey_cmdGet(int arg_cnt, char **args) {
   cnc_print_cmdGet_tbd(nfcKeyName);
-  for(uint8_t i=0; i<6; i++) { Serial.print(nfcKey[i], HEX); }
+  for(uint8_t i=0; i<6; i++) { Serial.print(nfcKey[i]/16, HEX); Serial.print(nfcKey[i]%16, HEX); }
   Serial.println(); Serial.flush();
 }
 void nfcKey_cmdSet(int arg_cnt, char **args) {
@@ -71,7 +71,7 @@ void nfcReadBlock_cmdGet(int arg_cnt, char **args) {
     uint8_t data_[16] = {0};
     if(nfc.mifareclassic_ReadDataBlock(blockNumber_, data_)) {
       cnc_print_cmdGet_tbd(nfcReadBlockName);
-      for(uint8_t i=0; i<16; i++) { Serial.print(data_[i], HEX); }
+      for(uint8_t i=0; i<16; i++) { Serial.print(data_[i]/16, HEX); Serial.print(data_[i]%16, HEX); }
       Serial.println(); Serial.flush();
     }
     else { cnc_print_cmdGet_tbd(nfcReadBlockName); Serial.println("READ_ERROR"); Serial.flush(); }
@@ -102,58 +102,52 @@ void nfcFormat_cmdGet(int arg_cnt, char **args) {
     uint8_t surname_[16] = {0};
     uint8_t name_[16] = {0};
     uint8_t data_[16] = {0};
-    char strdata_[3] = {0,0,0};
+    uint8_t keys_[16] = {0};
 
     /* Surname */
-    for(uint8_t i=0; i<16; i++) { surname_[i] = 0 }
+    for(uint8_t i=0; i<16; i++) { surname_[i] = 0; }
     for(uint8_t i=0; i<16; i++) {
-      if(0 == args[3][2*i]) { break; }
-      strdata_[0] = args[3][2*i];
-      strdata_[1] = args[3][(2*i)+1];
-      strdata_[2] = 0;
-      surname_[i] = strtoul(strdata_, NULL, 16);
+      if(0 == args[3][i]) { break; }
+      surname_[i] = args[3][i];
     }
     /* Name */
-    for(uint8_t i=0; i<16; i++) { name_[i] = 0 }
+    for(uint8_t i=0; i<16; i++) { name_[i] = 0; }
     for(uint8_t i=0; i<16; i++) {
-      if(0 == args[4][2*i]) { break; }
-      strdata_[0] = args[4][2*i];
-      strdata_[1] = args[4][(2*i)+1];
-      strdata_[2] = 0;
-      name_[i] = strtoul(strdata_, NULL, 16);
+      if(0 == args[4][i]) { break; }
+      name_[i] = args[4][i];
     }
     /* Data */
-    for(uint8_t i=0; i<16; i++) { data_[i] = 0 }
+    for(uint8_t i=0; i<16; i++) { data_[i] = 0; }
     /* Keys */
     for(uint8_t i=0; i<6; i++) { keys_[i] = nfcKey[i]; keys_[i+10] = nfcKey[i]+1; }
-    key[6] = 0xFF; key[7] = 0x07; key[8] = 0x80; key[9] = 0x69;
+    keys_[6] = 0xFF; keys_[7] = 0x07; keys_[8] = 0x80; keys_[9] = 0x69;
     /* Write all blocks to tag */
     for(uint8_t i=0; i<16; i++) {
-      if(0 == nfc.mifareclassic_AuthenticateBlock(nfcUID, nfcUIDLength, i, 0, nfcKey)) {
-        cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("AUT_ERROR "); Serial.println(i/4); Serial.flush(); return;
+      if(0 == nfc.mifareclassic_AuthenticateBlock(nfcUID, nfcUIDLength, 4*i, 0, nfcKey)) {
+        cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("AUT_ERROR "); Serial.println(i); Serial.flush(); return;
       }
       if(0 != i) {
-        if(0 == nfc.mifareclassic_WriteDataBlock(i, surname_)) {
+        if(0 == nfc.mifareclassic_WriteDataBlock(4*i, surname_)) {
           cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("SURNAME_ERROR "); Serial.println(i); Serial.flush(); return;
         }
       }
-      if(0 == nfc.mifareclassic_WriteDataBlock(i+1, name_)) {
+      if(0 == nfc.mifareclassic_WriteDataBlock((4*i)+1, name_)) {
         cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("NAME_ERROR "); Serial.println(i); Serial.flush(); return;
       }
-      if(0 == nfc.mifareclassic_WriteDataBlock(i+2, data_)) {
+      if(0 == nfc.mifareclassic_WriteDataBlock((4*i)+2, data_)) {
         cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("DATA_ERROR "); Serial.println(i); Serial.flush(); return;
       }
-      if(0 == nfc.mifareclassic_WriteDataBlock(i+3, keys_)) {
-        cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("KEYS_ERROR "); Serial.println(i); Serial.flush(); return;
-      }
-      cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("OK "); Serial.println(i); Serial.flush(); return;
+      //if(0 == nfc.mifareclassic_WriteDataBlock((4*i)+3, keys_)) {
+      //  cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("KEYS_ERROR "); Serial.println(i); Serial.flush(); return;
+      //}
+      cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("OK "); Serial.println(i); Serial.flush();
     }
-    cnc_print_cmdGet_tbd(nfcFormatName); Serial.println("OK"); Serial.flush(); return;
+    cnc_print_cmdGet_tbd(nfcFormatName); Serial.println("OK end"); Serial.flush();
   }
   else { cnc_print_cmdGet_tbd(nfcFormatName); Serial.println("ARG_ERROR"); Serial.flush(); }
 }
 void nfcMode_cmdGet(int arg_cnt, char **args) {
-  cnc_print_cmdGet_tbd(nfcModeName, nfcMode);
+  cnc_print_cmdGet_u32(nfcModeName, nfcMode);
 }
 void nfcMode_cmdSet(int arg_cnt, char **args) {
   if(4 == arg_cnt) {
@@ -173,7 +167,7 @@ void setup() {
   cnc_cmdGet_Add(nfcTargetIDName, nfcTargetID_cmdGet);
   cnc_cmdGet_Add(nfcKeyName, nfcKey_cmdGet);
   cnc_cmdSet_Add(nfcKeyName, nfcKey_cmdSet);
-  cnc_cmdGet_Add(nfcAuthenticateBlockName, nfcAuthenticateBlock_cmdGet)
+  cnc_cmdGet_Add(nfcAuthenticateBlockName, nfcAuthenticateBlock_cmdGet);
   cnc_cmdGet_Add(nfcReadBlockName, nfcReadBlock_cmdGet);
   cnc_cmdGet_Add(nfcWriteBlockName, nfcWriteBlock_cmdGet);
   cnc_cmdGet_Add(nfcFormatName, nfcFormat_cmdGet);
@@ -194,15 +188,19 @@ void loop() {
     if(1 == nfcMode) {
       if(1 == nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, nfcUID, &nfcUIDLength)) {
         /* Authenticate on sector 1 using KEY_A */
-        if(1 == nfc.mifareclassic_AuthenticateBlock(nfcUID, nfcUIDLength, 1, 0, nfcKey)) {
-          uint8_t surname_[17] = {0};
+        if(1 == nfc.mifareclassic_AuthenticateBlock(nfcUID, nfcUIDLength, 4, 0, nfcKey)) {
+          char surname_[17] = {0};
           if(1 == nfc.mifareclassic_ReadDataBlock(4, surname_)) {
-            uint8_t name_[17] = {0};
+            char name_[17] = {0};
             if(1 == nfc.mifareclassic_ReadDataBlock(5, name_)) {
               cnc_print_cmdGet_tbd(nfcTagName); Serial.print(surname_); Serial.print(" "); Serial.println(name_); Serial.flush();
             }
+            //else { Serial.println("ERROR reading block 5"); }
           }
+          //else { Serial.println("ERROR reading block 4"); }
         }
+        //else { Serial.println("ERROR authenticate block 4 with KEY_A"); }
+        while(nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, nfcUID, &nfcUIDLength)) { cncPoll(); }
       }
     }
     previousTime_1s = currentTime;

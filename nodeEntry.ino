@@ -16,6 +16,7 @@ const char nfcKeyName[] PROGMEM = "nfcKey";
 const char nfcAuthenticateBlockName[] PROGMEM = "nfcAuthenticateBlock";
 const char nfcReadBlockName[] PROGMEM = "nfcReadBlock";
 const char nfcWriteBlockName[] PROGMEM = "nfcWriteBlock";
+const char nfcFormatName[] PROGMEM = "nfcFormat";
 
 uint32_t previousTime_1s = 0;
 uint32_t previousTime_10s = 0;
@@ -57,7 +58,7 @@ void nfcAuthenticateBlock_cmdGet(int arg_cnt, char **args) {
   if(5 == arg_cnt) {
     uint32_t blockNumber_ = strtoul(args[3], NULL, 10);
     uint8_t keyNumber_ = strtoul(args[4], NULL, 10);
-    cnc_print_cmdGet_u32(nfcAuthenticateBlockName, nfc.mifareclassic_AuthenticateBlock (nfcUID, nfcUIDLength, blockNumber_, keyNumber_, nfcKey));
+    cnc_print_cmdGet_u32(nfcAuthenticateBlockName, nfc.mifareclassic_AuthenticateBlock(nfcUID, nfcUIDLength, blockNumber_, keyNumber_, nfcKey));
   }
   else { cnc_print_cmdGet_tbd(nfcAuthenticateBlockName); Serial.println("ARG_ERROR"); Serial.flush(); }
 }
@@ -93,6 +94,31 @@ void nfcWriteBlock_cmdGet(int arg_cnt, char **args) {
   }
   else { cnc_print_cmdGet_tbd(nfcReadBlockName); Serial.println("ARG_ERROR"); Serial.flush(); }
 }
+void nfcFormat_cmdGet(int arg_cnt, char **args) {
+  if(4 == arg_cnt) {
+    uint8_t data_[16] = {0};
+    char strdata_[3] = {0,0,0};
+    for(uint8_t i=0; i<16; i++) {
+      strdata_[0] = args[3][2*i];
+      strdata_[1] = args[3][(2*i)+1];
+      strdata_[2] = 0;
+      data_[i] = strtoul(strdata_, NULL, 16);
+    }
+    uint8_t currentBlock = 0;
+    for(uint8_t i=0; i<64; i++) {
+      if(nfc.mifareclassic_IsFirstBlock(i)) {
+        if(0 == nfc.mifareclassic_AuthenticateBlock(nfcUID, nfcUIDLength, i, 0, nfcKey)) {
+          cnc_print_cmdGet_tbd(nfcWriteBlockName); Serial.print("AUT_ERROR "); Serial.println(i/4); Serial.flush(); return;
+        }
+      }
+      if(0 == nfc.mifareclassic_WriteDataBlock(i, data_)) {
+        cnc_print_cmdGet_tbd(nfcWriteBlockName); Serial.print("WRITE_ERROR "); Serial.println(i); Serial.flush(); return;
+      }
+    }
+    cnc_print_cmdGet_tbd(nfcWriteBlockName); Serial.println("OK"); Serial.flush(); return;
+  }
+  else { cnc_print_cmdGet_tbd(nfcFormatName); Serial.println("ARG_ERROR"); Serial.flush(); }
+}
 
 void setup() {
   Serial.begin(115200);
@@ -109,7 +135,8 @@ void setup() {
   cnc_cmdGet_Add(nfcAuthenticateBlockName, nfcAuthenticateBlock_cmdGet)
   cnc_cmdGet_Add(nfcReadBlockName, nfcReadBlock_cmdGet);
   cnc_cmdGet_Add(nfcWriteBlockName, nfcWriteBlock_cmdGet);
-  
+  cnc_cmdGet_Add(nfcFormatName, nfcFormat_cmdGet);
+
   previousTime_1s = millis();
   previousTime_10s = previousTime_1s;
   

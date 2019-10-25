@@ -192,8 +192,6 @@ void loop() {
   /* HK @ 1.0Hz */
   if((uint32_t)(currentTime - previousTime_1s) >= 1000) {
     if(1 == nfcMode) {
-      uint8_t uid_[7] = {0};
-      for(uint8_t i=0; i<7; i++) { uid_[i] = 0; }
       if(1 == nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, nfcUID, &nfcUIDLength)) {
         /* Authenticate on sector 1 using KEY_A */
         if(1 == nfc.mifareclassic_AuthenticateBlock(nfcUID, nfcUIDLength, 1, 0, nfcKey)) {

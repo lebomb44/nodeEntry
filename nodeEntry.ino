@@ -95,27 +95,34 @@ void nfcWriteBlock_cmdGet(int arg_cnt, char **args) {
   else { cnc_print_cmdGet_tbd(nfcReadBlockName); Serial.println("ARG_ERROR"); Serial.flush(); }
 }
 void nfcFormat_cmdGet(int arg_cnt, char **args) {
-  if(4 == arg_cnt) {
-    uint8_t data_[16] = {0};
+  if(5 == arg_cnt) {
+    uint8_t surname_[16] = {0};
+    uint8_t name_[16] = {0};
     char strdata_[3] = {0,0,0};
     for(uint8_t i=0; i<16; i++) {
       strdata_[0] = args[3][2*i];
       strdata_[1] = args[3][(2*i)+1];
       strdata_[2] = 0;
-      data_[i] = strtoul(strdata_, NULL, 16);
+      surname_[i] = strtoul(strdata_, NULL, 16);
     }
-    uint8_t currentBlock = 0;
-    for(uint8_t i=0; i<64; i++) {
-      if(nfc.mifareclassic_IsFirstBlock(i)) {
-        if(0 == nfc.mifareclassic_AuthenticateBlock(nfcUID, nfcUIDLength, i, 0, nfcKey)) {
-          cnc_print_cmdGet_tbd(nfcWriteBlockName); Serial.print("AUT_ERROR "); Serial.println(i/4); Serial.flush(); return;
-        }
+    for(uint8_t i=0; i<16; i++) {
+      strdata_[0] = args[4][2*i];
+      strdata_[1] = args[4][(2*i)+1];
+      strdata_[2] = 0;
+      name_[i] = strtoul(strdata_, NULL, 16);
+    }
+    for(uint8_t i=0; i<16; i++) {
+      if(0 == nfc.mifareclassic_AuthenticateBlock(nfcUID, nfcUIDLength, i, 0, nfcKey)) {
+        cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("AUT_ERROR "); Serial.println(i/4); Serial.flush(); return;
       }
-      if(0 == nfc.mifareclassic_WriteDataBlock(i, data_)) {
-        cnc_print_cmdGet_tbd(nfcWriteBlockName); Serial.print("WRITE_ERROR "); Serial.println(i); Serial.flush(); return;
+      if(0 == nfc.mifareclassic_WriteDataBlock(i, surname_)) {
+        cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("SURNAME_ERRORR "); Serial.println(i); Serial.flush(); return;
+      }
+      if(0 == nfc.mifareclassic_WriteDataBlock(i, name_)) {
+        cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("NAME_ERRORR "); Serial.println(i); Serial.flush(); return;
       }
     }
-    cnc_print_cmdGet_tbd(nfcWriteBlockName); Serial.println("OK"); Serial.flush(); return;
+    cnc_print_cmdGet_tbd(nfcFormatName); Serial.println("OK"); Serial.flush(); return;
   }
   else { cnc_print_cmdGet_tbd(nfcFormatName); Serial.println("ARG_ERROR"); Serial.flush(); }
 }

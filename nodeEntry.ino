@@ -15,7 +15,7 @@ const char nfcTargetIDName[] PROGMEM = "nfcTargetID";
 const char nfcKeyName[] PROGMEM = "nfcKey";
 const char nfcAuthenticateBlockName[] PROGMEM = "nfcAuthenticateBlock";
 const char nfcReadBlockName[] PROGMEM = "nfcReadBlock";
-const char nfcReadTargetName[] PROGMEM = "nfcReadTarget";
+const char nfcWriteBlockName[] PROGMEM = "nfcWriteBlock";
 
 uint32_t previousTime_1s = 0;
 uint32_t previousTime_10s = 0;
@@ -53,13 +53,26 @@ void nfcKey_cmdSet(int arg_cnt, char **args) {
     }
   }
 }
-void nfcnfcAuthenticateBlock_cmdGet(int arg_cnt, char **args) {
+void nfcAuthenticateBlock_cmdGet(int arg_cnt, char **args) {
   if(5 == arg_cnt) {
     uint32_t blockNumber_ = strtoul(args[3], NULL, 10);
     uint8_t keyNumber_ = strtoul(args[4], NULL, 10);
     cnc_print_cmdGet_u32(nfcAuthenticateBlockName, nfc.mifareclassic_AuthenticateBlock (nfcUID, nfcUIDLength, blockNumber_, keyNumber_, nfcKey));
   }
-  else { cnc_print_cmdGet_tbd(nfcAuthenticateBlockName); Serial.println("ERROR"); Serial.flush(); }
+  else { cnc_print_cmdGet_tbd(nfcAuthenticateBlockName); Serial.println("ARG_ERROR"); Serial.flush(); }
+}
+void nfcReadBlock_cmdGet(int arg_cnt, char **args) {
+  if(4 == arg_cnt) {
+    uint32_t blockNumber_ = strtoul(args[3], NULL, 10);
+    uint8_t data_[16] = {0};
+    if(nfc.mifareclassic_ReadDataBlock(blockNumber_, data_)) {
+      cnc_print_cmdGet_tbd(nfcReadBlockName);
+      for(uint8_t i=0; i<16; i++) { Serial.print(data_[i], HEX); }
+      Serial.println(); Serial.flush();
+    }
+    else { cnc_print_cmdGet_tbd(nfcReadBlockName); Serial.println("READ_ERROR"); Serial.flush(); }
+  }
+  else { cnc_print_cmdGet_tbd(nfcReadBlockName); Serial.println("ARG_ERROR"); Serial.flush(); }
 }
 
 void setup() {
@@ -74,9 +87,9 @@ void setup() {
   cnc_cmdGet_Add(nfcTargetIDName, nfcTargetID_cmdGet);
   cnc_cmdGet_Add(nfcKeyName, nfcKey_cmdGet);
   cnc_cmdSet_Add(nfcKeyName, nfcKey_cmdSet);
-  cnc_cmdGet_Add(nfcAuthenticateBlockName, nfcnfcAuthenticateBlock_cmdGet)
-  //cnc_cmdGet_Add(nfcReadBlockName, nfcReadBlock);
-  //cnc_cmdGet_Add(nfcReadTargetName, nfcReadTarget);
+  cnc_cmdGet_Add(nfcAuthenticateBlockName, nfcAuthenticateBlock_cmdGet)
+  cnc_cmdGet_Add(nfcReadBlockName, nfcReadBlock_cmdGet);
+  cnc_cmdGet_Add(nfcWriteBlockName, nfcWriteBlock_cmdGet);
   
   previousTime_1s = millis();
   previousTime_10s = previousTime_1s;

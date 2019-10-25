@@ -74,6 +74,25 @@ void nfcReadBlock_cmdGet(int arg_cnt, char **args) {
   }
   else { cnc_print_cmdGet_tbd(nfcReadBlockName); Serial.println("ARG_ERROR"); Serial.flush(); }
 }
+void nfcWriteBlock_cmdGet(int arg_cnt, char **args) {
+  if(5 == arg_cnt) {
+    uint32_t blockNumber_ = strtoul(args[3], NULL, 10);
+    uint8_t data_[16] = {0};
+    char strdata_[3] = {0,0,0};
+    for(uint8_t i=0; i<16; i++) {
+      strdata_[0] = args[4][2*i];
+      strdata_[1] = args[4][(2*i)+1];
+      strdata_[2] = 0;
+      data_[i] = strtoul(strdata_, NULL, 16);
+    }
+    if(nfc.mifareclassic_WriteDataBlock(blockNumber_, data_)) {
+      cnc_print_cmdGet_tbd(nfcWriteBlockName);
+      Serial.println("OK"); Serial.flush();
+    }
+    else { cnc_print_cmdGet_tbd(nfcReadBlockName); Serial.println("WRITE_ERROR"); Serial.flush(); }
+  }
+  else { cnc_print_cmdGet_tbd(nfcReadBlockName); Serial.println("ARG_ERROR"); Serial.flush(); }
+}
 
 void setup() {
   Serial.begin(115200);

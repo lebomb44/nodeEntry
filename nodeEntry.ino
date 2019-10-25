@@ -18,6 +18,7 @@ const char nfcReadBlockName[] PROGMEM = "nfcReadBlock";
 const char nfcWriteBlockName[] PROGMEM = "nfcWriteBlock";
 const char nfcFormatName[] PROGMEM = "nfcFormat";
 const char nfcModeName[] PROGMEM = "nfcMode";
+const char nfcTagName[] PROGMEM = "nfcTag";
 
 uint32_t previousTime_1s = 0;
 uint32_t previousTime_10s = 0;
@@ -29,7 +30,7 @@ PN532 nfc(pn532spi);
 uint8_t nfcUID[7] = { 0, 0, 0, 0, 0, 0, 0 };
 uint8_t nfcUIDLength = 0;
 uint8_t nfcKey[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-uint8_t nfcMode = 0;
+uint8_t nfcMode = 1;
 
 void ping_cmdGet(int arg_cnt, char **args) { cnc_print_cmdGet_u32(pingName, currentTime); }
 void nfcFirmwareVersion_cmdGet(int arg_cnt, char **args) { cnc_print_cmdGet_u32(nfcFirmwareVersionName, nfc.getFirmwareVersion()); }
@@ -125,7 +126,7 @@ void nfcFormat_cmdGet(int arg_cnt, char **args) {
     for(uint8_t i=0; i<16; i++) { data_[i] = 0 }
     /* Keys */
     for(uint8_t i=0; i<6; i++) { keys_[i] = nfcKey[i]; keys_[i+10] = nfcKey[i]+1; }
-    key[6] = 0; key[7] = 0; key[8] = 0; key[9] = 0;
+    key[6] = 0xFF; key[7] = 0x07; key[8] = 0x80; key[9] = 0x69;
     /* Write all blocks to tag */
     for(uint8_t i=0; i<16; i++) {
       if(0 == nfc.mifareclassic_AuthenticateBlock(nfcUID, nfcUIDLength, i, 0, nfcKey)) {

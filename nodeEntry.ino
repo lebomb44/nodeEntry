@@ -157,9 +157,9 @@ void nfcFormat_cmdGet(int arg_cnt, char **args) {
     /* Data */
     for(uint8_t i=0; i<16; i++) { data_[i] = 0; }
     /* Keys */
-    keys_[0] = 0x00; keys_[1] = 0x00; keys_[2] = 0x00; keys_[3] = 0x00; keys_[4] = 0x00; keys_[5] = 0x00; 
+    keys_[0] = 0x1A; keys_[1] = 0xCF; keys_[2] = 0xFC; keys_[3] = 0x1D; keys_[4] = 0xEB; keys_[5] = 0x90; 
     keys_[6] = 0x78; keys_[7] = 0x77; keys_[8] = 0x88; keys_[9] = 0x44;
-    keys_[10] = 0x00; keys_[11] = 0x00; keys_[12] = 0x00; keys_[13] = 0x00; keys_[14] = 0x00; keys_[15] = 0x00; 
+    keys_[10] = 0xEB; keys_[11] = 0x90; keys_[12] = 0x1A; keys_[13] = 0xCF; keys_[14] = 0xFC; keys_[15] = 0x1D; 
     /* Write all blocks to tag */
     for(uint8_t i=0; i<16; i++) {
       if(0 == nfc.mifareclassic_AuthenticateBlock(nfcUID, nfcUIDLength, 4*i, 0, nfcKey)) {
@@ -176,9 +176,9 @@ void nfcFormat_cmdGet(int arg_cnt, char **args) {
       if(0 == nfc.mifareclassic_WriteDataBlock((4*i)+2, data_)) {
         cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("DATA_ERROR "); Serial.println(i); Serial.flush(); return;
       }
-      //if(0 == nfc.mifareclassic_WriteDataBlock((4*i)+3, keys_)) {
-      //  cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("KEYS_ERROR "); Serial.println(i); Serial.flush(); return;
-      //}
+      if(0 == nfc.mifareclassic_WriteDataBlock((4*i)+3, keys_)) {
+        cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("KEYS_ERROR "); Serial.println(i); Serial.flush(); return;
+      }
       cnc_print_cmdGet_tbd(nfcFormatName); Serial.print("OK "); Serial.println(i); Serial.flush();
     }
     cnc_print_cmdGet_tbd(nfcFormatName); Serial.println("OK end"); Serial.flush();

@@ -196,7 +196,7 @@ void nfcMode_cmdSet(int arg_cnt, char **args) {
 
 void setup() {
   Serial.begin(115200);
-  cncInit(nodeName);
+  cncInit(nodeName, &Serial3);
   cnc_hkName_set(hkName);
   cnc_cmdGetName_set(cmdGetName);
   cnc_cmdSetName_set(cmdSetName);

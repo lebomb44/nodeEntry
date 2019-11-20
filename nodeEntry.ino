@@ -35,7 +35,7 @@ PN532 nfc(pn532spi);
 uint8_t lightMode = 0;
 uint8_t nfcUID[7] = { 0, 0, 0, 0, 0, 0, 0 };
 uint8_t nfcUIDLength = 0;
-uint8_t nfcKey[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+uint8_t nfcKey[6] = { 0x1A, 0xCF, 0xFC, 0x1D, 0xEB, 0x90 };
 uint8_t nfcMode = 1;
 
 void ping_cmdGet(int arg_cnt, char **args) { cnc_print_cmdGet_u32(pingName, currentTime); }

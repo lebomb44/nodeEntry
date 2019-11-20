@@ -3,7 +3,7 @@
 #include <PN532_SPI.h>
 #include <PN532.h>
 
-#define LIGHT_PIN 13
+#define LIGHT_PIN A9
 
 const char nodeName[] PROGMEM = "entry";
 const char sepName[] PROGMEM = " ";
@@ -195,7 +195,7 @@ void nfcMode_cmdSet(int arg_cnt, char **args) {
 }
 
 void setup() {
-  cncInit(nodeName, &Serial);
+  cncInit(nodeName, &Serial1);
   cnc_Serial_get()->begin(115200);
   cnc_hkName_set(hkName);
   cnc_cmdGetName_set(cmdGetName);

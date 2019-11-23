@@ -24,10 +24,7 @@ const char nfcFormatName[] PROGMEM = "nfcFormat";
 const char nfcModeName[] PROGMEM = "nfcMode";
 const char nfcTagName[] PROGMEM = "nfcTag";
 
-uint32_t previousTime_1s = 0;
-uint32_t previousTime_10s = 0;
 uint32_t previousTime_light = 0;
-uint32_t currentTime = 0;
 
 PN532_SPI pn532spi(SPI, 10);
 PN532 nfc(pn532spi);
@@ -38,7 +35,7 @@ uint8_t nfcUIDLength = 0;
 uint8_t nfcKey[6] = { 0x1A, 0xCF, 0xFC, 0x1D, 0xEB, 0x90 };
 uint8_t nfcMode = 1;
 
-void ping_cmdGet(int arg_cnt, char **args) { cnc_print_cmdGet_u32(pingName, currentTime); }
+void ping_cmdGet(int arg_cnt, char **args) { cnc_print_cmdGet_u32(pingName, millis()); }
 void lightMode_cmdGet(int arg_cnt, char **args) { cnc_print_cmdGet_u32(lightModeName, lightMode); }
 void lightMode_cmdSet(int arg_cnt, char **args) {
   if(4 == arg_cnt) {
@@ -216,9 +213,7 @@ void setup() {
   cnc_cmdGet_Add(nfcModeName, nfcMode_cmdGet);
   cnc_cmdSet_Add(nfcModeName, nfcMode_cmdSet);
 
-  previousTime_1s = millis();
-  previousTime_10s = previousTime_1s;
-  previousTime_light = previousTime_1s;
+  previousTime_light = millis();
 
   nfc.begin();
   nfc.SAMConfig();
@@ -226,40 +221,37 @@ void setup() {
   digitalWrite(LIGHT_PIN, HIGH);
 }
 
-void loop() {
-  currentTime = millis(); cncPoll();
+void runLight(void) {
   /* Light blink */
-  if((uint32_t)(currentTime - previousTime_light) >= 100) {
+  uint32_t currentTime_ = 0;
+  currentTime_ = millis();
+  if((uint32_t)(currentTime_ - previousTime_light) >= 100) {
     if(0 == lightMode) { digitalWrite(LIGHT_PIN, LOW); }
     else if(1 == lightMode) { digitalWrite(LIGHT_PIN, HIGH); }
     else if(2 == lightMode) { digitalWrite(LIGHT_PIN, !digitalRead(LIGHT_PIN)); }
     else { digitalWrite(LIGHT_PIN, LOW); }
-    previousTime_light = currentTime;
+    previousTime_light = currentTime_;
   }
-  /* HK @ 1.0Hz */
-  if((uint32_t)(currentTime - previousTime_1s) >= 1000) {
-    if(1 == nfcMode) {
-      if(1 == nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, nfcUID, &nfcUIDLength)) {
-        /* Authenticate on sector 1 using KEY_A */
-        if(1 == nfc.mifareclassic_AuthenticateBlock(nfcUID, nfcUIDLength, 4, 0, nfcKey)) {
-          char surname_[17] = {0};
-          if(1 == nfc.mifareclassic_ReadDataBlock(4, surname_)) {
-            char name_[17] = {0};
-            if(1 == nfc.mifareclassic_ReadDataBlock(5, name_)) {
-              cnc_print_cmdGet_tbd(nfcTagName); cnc_Serial_get()->print(surname_); cnc_Serial_get()->print(" "); cnc_Serial_get()->println(name_); cnc_Serial_get()->flush();
-            }
-            else { cnc_print_cmdGet_tbd(nfcTagName); cnc_Serial_get()->println("ERROR reading block 5"); cnc_Serial_get()->flush(); }
+}
+void loop() {
+  cncPoll();
+  runLight();
+  if(1 == nfcMode) {
+    if(1 == nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, nfcUID, &nfcUIDLength, 100, false)) {
+      /* Authenticate on sector 1 using KEY_A */
+      if(1 == nfc.mifareclassic_AuthenticateBlock(nfcUID, nfcUIDLength, 4, 0, nfcKey)) {
+        char surname_[17] = {0};
+        if(1 == nfc.mifareclassic_ReadDataBlock(4, surname_)) {
+          char name_[17] = {0};
+          if(1 == nfc.mifareclassic_ReadDataBlock(5, name_)) {
+            cnc_print_cmdGet_tbd(nfcTagName); cnc_Serial_get()->print(surname_); cnc_Serial_get()->print(" "); cnc_Serial_get()->println(name_); cnc_Serial_get()->flush();
           }
-          else { cnc_print_cmdGet_tbd(nfcTagName); cnc_Serial_get()->println("ERROR reading block 4"); cnc_Serial_get()->flush(); }
+          else { cnc_print_cmdGet_tbd(nfcTagName); cnc_Serial_get()->println("ERROR reading block 5"); cnc_Serial_get()->flush(); }
         }
-        else { cnc_print_cmdGet_tbd(nfcTagName); cnc_Serial_get()->println("ERROR authenticate block 4 with KEY_A"); cnc_Serial_get()->flush(); }
-        while(nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, nfcUID, &nfcUIDLength)) { cncPoll(); }
+        else { cnc_print_cmdGet_tbd(nfcTagName); cnc_Serial_get()->println("ERROR reading block 4"); cnc_Serial_get()->flush(); }
       }
+      else { cnc_print_cmdGet_tbd(nfcTagName); cnc_Serial_get()->println("ERROR authenticate block 4 with KEY_A"); cnc_Serial_get()->flush(); }
+      do { cncPoll(); runLight(); } while(nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, nfcUID, &nfcUIDLength, 100, false));
     }
-    previousTime_1s = currentTime;
-  }
-  /* HK @ 0.1Hz */
-  if((uint32_t)(currentTime - previousTime_10s) >= 10000) {
-    previousTime_10s = currentTime;
   }
 }
